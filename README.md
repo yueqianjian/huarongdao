@@ -19,3 +19,5 @@ npm run dev
 具体逻辑和实现过程请看代码。
 
 ## 效果展示
+![截图](./screenshots/1.png)
+![截图](./screenshots/2.png)
