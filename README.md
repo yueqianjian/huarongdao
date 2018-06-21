@@ -1,21 +1,21 @@
 # huarongdao
 
-> A Vue.js project
+> Vue开发的华容道小游戏
 
-## Build Setup
+## 启动
 
 ``` bash
-# install dependencies
 npm install
-
-# serve with hot reload at localhost:8080
 npm run dev
-
-# build for production with minification
-npm run build
-
-# build for production and view the bundle analyzer report
-npm run build --report
+打开浏览器localhost:8080
 ```
 
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
+## 技术实现
+
+把选中的图片，用canvas重绘成符合预定宽度的图画，然后把canvas装换成base64，接着用flex弹性盒子分割成N x N的方块，每个方块以base64为背景图片，用background-position实现方块和整个图画位置的一一对应，最后通过flex的order的替换来实现方块的移动。
+
+还实现了游戏的倒计时，以及自定义选择图片。
+
+具体逻辑和实现过程请看代码。
+
+## 效果展示
