@@ -1,10 +1,14 @@
 <template>
-  <div class="huarongdao" :style="`width:${canvasW}px`">
-    <p class="setter">
-      <input v-model="row" />x<input v-model="col" />
-    </p>
+  <div class="huarongdao" :style="`width:${canvasW}px`" @click="hideLevel">
+    <div class="setter">
+      <input v-model.number="row" />x<input v-model.number="col" />
+      <p>输入最小为
+        <span>3</span>，最大为
+        <span>10</span> 的数值，修改后请
+        <span>重置</span>！！！</p>
+    </div>
     <div class="timer">
-      <p></p>
+      <p ref="timer"></p>
     </div>
     <div class="main" :style="`width:${canvasW}px`">
       <canvas ref="canvas"></canvas>
@@ -13,17 +17,26 @@
       </template>
     </div>
     <div class="menu">
-      <div>
-        难度
+      <div @click.stop="showLevel">
+        <div>
+          <p>难度</p>
+          <p>{{levelList[level]}}</p>
+        </div>
+        <div v-if="levelFlag">
+          <div v-for="(item,index) in levelList" :key="item" @click.stop="setLevel(index)">
+            {{ item }}
+          </div>
+        </div>
       </div>
-      <div>
+      <div @click="gameStart">
         开始
       </div>
-      <div @click="init">
-        重载
+      <div @click="reload">
+        重置
       </div>
       <div>
         选择图片
+        <input @change="changeImg" type="file" accept="image/*">
       </div>
     </div>
   </div>
@@ -43,8 +56,21 @@ export default {
       img: require("../assets/xiaoyaogu.jpg"),
       canvasURL: "",
       cell: null,
-      flexNum: NaN
+      flexNum: NaN,
+      timerNum: NaN,
+      time: 180000,
+      level: 1,
+      levelList: ["史莱姆", "村民", "魔王"],
+      levelFlag: false
     };
+  },
+  watch: {
+    row(e) {
+      this.numFilter(e, "row");
+    },
+    col(e) {
+      this.numFilter(e, "col");
+    }
   },
   methods: {
     init() {
@@ -54,6 +80,7 @@ export default {
       this.createImg(this.img, (w, h, img) => {
         this.writeCanvas(w, h, img);
       });
+      this.setTime();
       this.$nextTick(() => {
         this.refresh = true;
       });
@@ -89,7 +116,6 @@ export default {
       let url = canvas.toDataURL();
       this.canvasURL = url;
       this.canvasH = canvasH;
-      this.confuse();
     },
     confuse() {
       const { row, col } = this;
@@ -158,8 +184,82 @@ export default {
         }
       }
       if (num === cell.length) {
-        alert("恭喜通关！");
+        clearInterval(this.timerNum);
+        setTimeout(() => {
+          alert("恭喜通关！");
+        }, 200);
       }
+    },
+    numFilter(e, name) {
+      if (typeof e !== "number") {
+        this[name] = 4;
+        return;
+      }
+      if (e < 3) {
+        this[name] = 3;
+      } else if (e > 10) {
+        this[name] = 10;
+      }
+    },
+    gameStart() {
+      this.confuse();
+      this.timer();
+    },
+    reload() {
+      this.init();
+      clearInterval(this.timerNum);
+      this.$refs.timer.style.width = `100%`;
+    },
+    changeImg(e) {
+      const file = e.target.files[0];
+      const url = window.URL.createObjectURL(file);
+      this.img = url;
+      this.reload();
+    },
+    setTime() {
+      const { row, col, level } = this;
+      const r = row - 3;
+      const c = col - 3;
+      let num = 1;
+      switch (level) {
+        case 0:
+          num = 1;
+          break;
+        case 1:
+          num = 1.2;
+          break;
+        case 2:
+          num = 1.5;
+          break;
+      }
+      const time = ((r + c) * 60000 + 150000) * num;
+      this.time = time;
+    },
+    timer() {
+      clearInterval(this.timerNum);
+      const { time } = this;
+      let time2 = time;
+      this.timerNum = setInterval(() => {
+        time2 = time2 - 1000;
+        this.$refs.timer.style.width = `${time2 * 100 / time}%`;
+        if (time2 <= 0) {
+          clearInterval(this.timerNum);
+          setTimeout(() => {
+            alert("GAME OVER");
+          }, 200);
+        }
+      }, 1000);
+    },
+    showLevel() {
+      this.levelFlag = true;
+    },
+    hideLevel() {
+      this.levelFlag = false;
+    },
+    setLevel(i) {
+      this.level = i;
+      this.hideLevel();
+      this.reload();
     }
   },
   mounted() {
@@ -186,6 +286,13 @@ export default {
       text-align: center;
       margin: 0 7px;
     }
+    > p {
+      margin-top: 5px;
+      font-size: 14px;
+      > span {
+        color: #ff0000;
+      }
+    }
   }
   .timer {
     width: 100%;
@@ -194,7 +301,7 @@ export default {
     background: #fff;
     border: 1px solid #000;
     > p {
-      width: 50%;
+      width: 100%;
       background: #000;
       height: 18px;
     }
@@ -212,20 +319,62 @@ export default {
       z-index: -1;
     }
     > div {
-      // flex: 0 0 25%;
       background-repeat: no-repeat;
     }
   }
   .menu {
     display: flex;
     justify-content: center;
+    color: #0298fb;
     > div {
       height: 50px;
       line-height: 50px;
+      background: #ffffff;
       cursor: pointer;
       width: 80px;
       border: 1px solid #000000;
       margin: 0 10px;
+      &:first-child {
+        position: relative;
+        > div {
+          &:first-child {
+            padding: 5px;
+            > p {
+              height: 20px;
+              line-height: 20px;
+              &:first-child {
+                border-bottom: 1px solid #777777;
+              }
+            }
+          }
+          &:nth-child(2) {
+            position: absolute;
+            left: -1px;
+            bottom: 49px;
+            width: 80px;
+            > div {
+              height: 40px;
+              line-height: 40px;
+              border: 1px solid #000000;
+              border-bottom: none;
+              background: #ffffff;
+            }
+          }
+        }
+      }
+      &:last-child {
+        position: relative;
+        overflow: hidden;
+        > input {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          opacity: 0;
+          cursor: pointer;
+        }
+      }
     }
   }
 }
